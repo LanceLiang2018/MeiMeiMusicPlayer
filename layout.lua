@@ -3,6 +3,7 @@ main={
   layout_width="fill_parent";
   layout_height="fill_parent";
   gravity="top|center";
+  background="#FF303030";
   {
     ImageView;
     layout_width="wrap_content";
@@ -88,6 +89,108 @@ main={
     };
     {
       TextView;
+      id="tv_lyric_u4";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_above="tv_lyric_u3";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_u5";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_above="tv_lyric_u4";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_u6";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_above="tv_lyric_u5";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_u7";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_above="tv_lyric_u6";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_u8";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_above="tv_lyric_u7";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_u9";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_above="tv_lyric_u8";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
       id="tv_lyric_d1";
       text="";
       layout_height="wrap_content";
@@ -137,6 +240,108 @@ main={
       alpha="0.5";
       gravity="center_horizontal";
     };
+    {
+      TextView;
+      id="tv_lyric_d4";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_below="tv_lyric_d3";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_d5";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_below="tv_lyric_d4";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_d6";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_below="tv_lyric_d5";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_d7";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_below="tv_lyric_d6";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_d8";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_below="tv_lyric_d7";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
+    {
+      TextView;
+      id="tv_lyric_d9";
+      text="";
+      layout_height="wrap_content";
+      --padding="10dp";
+      textColor="#FFFFFF";
+      --layout_alignParentTop=true;
+      textSize="20sp";
+      layout_width="wrap_content";
+      --background="#605756";
+      --layout_centerVertical=true;
+      layout_below="tv_lyric_d8";
+      layout_centerHorizontal=true;
+      alpha="0.5";
+      gravity="center_horizontal";
+    };
   };
   {
     TextView;
@@ -146,9 +351,13 @@ main={
     padding="10dp";
     textColor="#FFFFFF";
     layout_alignParentTop=true;
-    textSize="30";
+    textSize="25sp";
     layout_width="match_parent";
     background="#605756";
+    --ellipsize="marquee";
+    --singleLine='true';
+    --focusableInTouchMode="true";
+    --focusable="true";
   };
   {
     LinearLayout;
@@ -158,6 +367,7 @@ main={
     gravity="bottom|center";
     layout_alignParentBottom=true;
     orientation="vertical";
+    background="#FF303030";
     {
       LinearLayout;
       layout_width="match_parent";
@@ -169,6 +379,7 @@ main={
       {
         TextView;
         text="00:00";
+        textColor="#99FFFFFF";
         layout_height="wrap_content";
         layout_width="wrap_content";
         id="tv_startTime";
@@ -184,6 +395,7 @@ main={
       {
         TextView;
         text="00:00";
+        textColor="#99FFFFFF";
         layout_height="wrap_content";
         layout_width="wrap_content";
         id="tv_endTime";
@@ -203,6 +415,7 @@ main={
         layout_width="wrap_content";
         onClick="on_playlist";
         layout_weight="1.0";
+        --background="#FF5A595B";
       };
       {
         Button;
@@ -211,6 +424,7 @@ main={
         layout_width="wrap_content";
         onClick="on_pre";
         layout_weight="1.0";
+        --background="#FF5A595B";
       };
       {
         Button;
@@ -220,6 +434,7 @@ main={
         layout_width="wrap_content";
         text="A";
         layout_weight="1.0";
+        --background="#FF5A595B";
       };
       {
         Button;
@@ -228,6 +443,7 @@ main={
         layout_width="wrap_content";
         onClick="on_next";
         layout_weight="1.0";
+        --background="#FF5A595B";
       };
       {
         Button;
@@ -236,6 +452,7 @@ main={
         layout_width="wrap_content";
         onClick="on_Menu";
         layout_weight="1.0";
+        --background="#FF5A595B";
       };
     };
   };

@@ -12,10 +12,11 @@ import "java.lang.*"
 import "android.content.Context"
 import "android.provider.*"
 require "layout"
+import "java.lang.System"
 activity.setTitle("播放器")
-activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-activity.setTheme(android.R.style.Theme_Material_NoActionBar)
-
+--activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+--activity.setTheme(android.R.style.Theme_Material_NoActionBar)
+--[[
 -- create a lyric table
 
 layout_lyric = {
@@ -27,11 +28,91 @@ layout_lyric = {
   layout_centerHorizontal=true;
   gravity="top|center";
 }
-print(layout_lyric['gravity'])
+
+lyric_unit = {
+  TextView;
+  --id="tv_lyric";
+  text="Text";
+  layout_height="wrap_content";
+  --padding="10dp";
+  textColor="#FFFFFF";
+  --textColor="#B38A46";
+  --layout_alignParentTop=true;
+  textSize="20sp";
+  layout_width="wrap_content";
+  --background="#605756";
+  layout_centerVertical=true;
+  layout_centerHorizontal=true;
+  gravity="center_horizontal";
+  --alpha="0.9";
+}
+lyric_list = {
+  {
+    TextView;
+    id="tv_lyric";
+    text="Text";
+    layout_height="wrap_content";
+    --padding="10dp";
+    textColor="#B38A46";
+    --layout_alignParentTop=true;
+    textSize="20sp";
+    layout_width="wrap_content";
+    --background="#605756";
+    layout_centerVertical=true;
+    layout_centerHorizontal=true;
+    gravity="center_horizontal";
+  };
+}
+
+--print(layout_lyric['gravity'])
+-- Create upper
+max_ext = 1
+for i=max_ext, 1, -1 do
+  unit = lyric_unit
+  unit['id'] = 'tv_lyric_u'..i
+  print('upper:', unit['id'])
+  if i == 1 then
+    unit['layout_above'] = 'tv_lyric'
+  elseif i <= max_ext then
+    unit['layout_above'] = 'tv_lyric_u'..tostring(i-1)
+  end
+  lyric_list[#lyric_list+1] = unit
+end]]
+-- create down
+--[[
+for i=1, max_ext do
+  unit = lyric_unit
+  unit['id'] = 'tv_lyric_d'..i
+  if i == 1 then
+    unit['layout_below'] = 'tv_lyric'
+  elseif i <= max_ext then
+    unit['layout_below'] = 'tv_lyric_d'..tostring(i-1)
+  end
+  lyric_list[#lyric_list+1] = unit
+end]]
+--[[
+for i=max_ext, 1, -1 do
+  unit = lyric_unit
+  unit['id'] = 'tv_lyric_d'..i
+  if i == 1 then
+    unit['layout_below'] = 'tv_lyric'
+  elseif i <= max_ext then
+    unit['layout_below'] = 'tv_lyric_d'..tostring(i-1)
+  end
+  lyric_list[#lyric_list+1] = unit
+end]]
+--[[
+for i=1, #lyric_list do
+  layout_lyric[i+1] = lyric_list[i]
+end
+]]
+--main[3] = layout_lyric
 
 activity.setContentView(loadlayout(main))
 back.setImageBitmap(loadbitmap("back.png"))
 w_lyric.setVisibility(View.INVISIBLE)
+
+this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); 
 
 --print("h")
 
@@ -56,12 +137,21 @@ local th_lrc = nil
 local has_lrc = false
 local lrc_data = {}
 local lrc_lines = {
+  tv_lyric_u9, tv_lyric_u8, tv_lyric_u7, 
+  tv_lyric_u6, tv_lyric_u5, tv_lyric_u4, 
   tv_lyric_u3, tv_lyric_u2, tv_lyric_u1,
   tv_lyric, 
   tv_lyric_d1, tv_lyric_d2, tv_lyric_d3,
+  tv_lyric_d4, tv_lyric_d5, tv_lyric_d6, 
+  tv_lyric_d7, tv_lyric_d8, tv_lyric_d9, 
 }
+--[==[for i=1, max_ext*2+1 do
+  print([[main[3][i], lrc_lines[i] ]], tv_lyric_d2)
+end]==]
 local sline = 1
 local lrc_changed = true
+local lrc_starting = false
+local lrc_jump = false
 
 local titles = {
   '就随便听听好了＾０＾~',
@@ -78,7 +168,8 @@ tv_title.setText(titles[math.random(1, #titles)])
 --@mp MediaPlayer对象
 --@path 歌曲完整路径
 function play(mp,path)
-  loadNewLrc(curPlay)
+  loadNewLrc()
+  --loadNewLrc()
   mp.reset()
   mp.setDataSource(path)
   mp.prepare()
@@ -203,6 +294,10 @@ function readLrc(path)
       -- continue??
       t_min = tointeger(string.match(time_str, "(.+):"))
       t_sec = tonumber(string.match(time_str, ":(.+)"))
+      if t_min == nil or t_sec == nil then 
+        t_min = 0
+        t_sec = 0
+      end
       if t_min ~= nil and t_sec ~= nil then
         g_time = t_min * 60 + t_sec
         --print(time_str, g_time)
@@ -226,6 +321,22 @@ function loadNewLrc()
   for i=1, #lrc_lines do
     lrc_lines[i].setText('')
   end
+  lrc_starting = true
+  if th_lrc ~= nil then
+    --print("!")
+    th_lrc.Enabled = false
+    th_lrc.stop()
+    th_lrc = nil
+    sline = 0
+  end
+  lrc_starting = true
+  sline = 0
+  lrc_changed = true
+  --print("Start New!")
+  th_lrc=timer(_run_ms,0,100,min,sec)
+  th_lrc.Enabled=true
+  sline = 0
+  --os.execute('sleep 1')
 
   if curPlay == nil then return end
   --print('loadNewLrc(): curPlay='..curPlay)
@@ -328,7 +439,7 @@ function showEditDialog(msg)
   if File(getAppPath()..'last_dir.txt').exists() == true then
     fp = BufferedReader(FileReader(getAppPath()..'last_dir.txt'))
     target = fp.readLine()
-    print('read:', target)
+    --print('read:', target)
   end
   --if target[-1] ~= '/' then target = target..'/' end
   --print('target=', string.target)
@@ -348,46 +459,64 @@ end
 
 ------全局代码------
 if tf.exists()==false then--文件列表不存在
-  showEditDialog("初次使用软件，设置扫描音乐的路径")
+  --showEditDialog("初次使用软件，设置扫描音乐的路径")
+  print("初次使用软件，设置扫描音乐的路径")
+  showEditDialog()
 else
   arr= readFile(listpath)
 end
 ----------------------------
 
---实时更新进度条和时间显示 and lyric
+--实时更新进度条和时间显示
 function updateTime(m,s)
   if m<10 then m="0"..m end
   if s<10 then s="0"..s end
   tv_startTime.setText(m..":"..s)
   pb_time.setProgress(mp.getCurrentPosition())
+  --print(th_lrc)
 end
 
 function updateTimeMs(ms)
   --change = false
+  --print(sline)
   if has_lrc == true then
     --tv_lyric.setText(tostring(ms))
     if sline + 1 >= #lrc_data then return end
+    if lrc_starting == true then
+      lrc_starting = false
+      return
+    end
+    if sline == nil then sline = 0 end
     if #lrc_data ~= 0 then
       --break
-      while sline + 1 < #lrc_data and lrc_data[sline+1][1] < ms do
-        --print(lrc_data[sline+1][1])
-        sline = sline + 1
-        lrc_changed = true
+      if lrc_jump == true then
+        while sline + 1 < #lrc_data and lrc_data[sline+1][1] < ms do
+          sline = sline + 1
+          lrc_changed = true
+        end
+        lrc_jump = false
+      end
+      for t=1, 1 do 
+        if sline + 1 < #lrc_data and lrc_data[sline+1][1] < ms then
+          --print(lrc_data[sline+1][1])
+          sline = sline + 1
+          lrc_changed = true
+        end
       end
     end
     if lrc_changed == true then
       --tv_lyric.setText(tostring(lrc_data[sline][2]))
       for i=1, #lrc_lines do
         --print(lrc_lines[i])
-        idx = sline + i - 1 - 3
+        idx = sline + i - 1 - tointeger(#lrc_lines-1) / 2
         lrc_lines[i].setText('')
-        if idx <= #lrc_data and idx > 0 then
+        if idx <= #lrc_data and idx > 0 and lrc_lines[i] ~= nil then
           lrc_lines[i].setText(tostring(lrc_data[idx][2]))
         end
         --lrc_lines[i].setText(tostring(i))
       end
       --print(lrc_lines[1])
-      --tv_lyric_d2.setText("jhh")
+      --tv_lyric.setText(tostring(System.currentTimeMillis()))
     end
   end
 end
@@ -404,25 +533,59 @@ function _run(m,s)
   end
 end
 
+function get_ms()
+  --print(System.currentTimeMillis())
+  return System.currentTimeMillis()
+end
+
+local delta = 0
+local ms_start = 0
+function init_ms(ms)
+  --print("init_ms", ms)
+  ms_start = System.currentTimeMillis()
+end
+function calc_delta(ms)
+  --ms_start = System.currentTimeMillis() + ms
+  if ms_start == 0 then
+    init_ms(ms)
+    return
+  end
+  ms_now = System.currentTimeMillis()
+  delta = ms_now - ms_start + ms
+  if delta <= 0 then 
+    ms_start = 0
+    return 
+  end
+  --print(delta)
+  updateTimeMs(delta)
+end
+
+--get_ms()
+
 --计时器代码2 ms
 function _run_ms(m,s)
+  --sline2 = 0
   ms = 1000 * (60 * m + s)
-  --ms_start = os.clock() * 1000
+  call("init_ms", ms)
+  --ms_start = System.currentTimeMillis() + ms
   function run()
-    ms=ms+100
+    --ms=ms+100
 
-    --ms_now = os.clock() * 1000
+    --ms_now = System.currentTimeMillis()
     --print(ms_now - ms_start, ms)
     --Notice: os_clock can't work probably!
     --print(ms_now)
     --delta = ms_now - ms_start
-    call("updateTimeMs", ms)
+    --call("updateTimeMs", delta)
+    call("calc_delta", ms)
     --print(delta)
+    --print('sline=', sline2)
   end
 end
 
 --上一曲
 function on_pre(v)
+  --loadNewLrc()
   if(curIdx>=0) then
     curIdx=curIdx-1
     if curIdx == -1 then curIdx = arr.size()-1 end
@@ -438,6 +601,7 @@ end
 
 --下一曲
 function on_next(v)
+  --loadNewLrc()
   --print(curIdx)
   --if curIdx == -1 then curIdx = 0 end
   if(curIdx<=arr.size()-1) then
@@ -580,7 +744,8 @@ function on_Menu(v)
       elseif which==1 then
         print([[落叶似秋制作，无版权，修改请注明原作者
 20170316更新：优化文件扫描器，更快速的扫描
-LanceLiang2018更新：增加了歌词显示功能]])
+LanceLiang2018更新(20190721)：增加了功能：
+歌词显示，美化，文件夹选择，标题滚动...]])
       elseif which==2 then
         if t~=nil then
           t.stop()
@@ -599,17 +764,26 @@ LanceLiang2018更新：增加了歌词显示功能]])
   ad.show()
 end
 
+exit = 0
+
 function onKeyDown(code,event)
-  if (code== KeyEvent.KEYCODE_BACK)then
+  if string.find(tostring(event),"KEYCODE_BACK") ~= nil then 
     --并不会发生什么...
-    if t~=nil then
-      t.stop()
+    if exit+2 > tonumber(os.time()) then 
+      if t~=nil then
+        t.stop()
+      end
+      if th_lrc ~= nil then
+        th_lrc.stop()
+      end
+      mp.stop()
+      mp.release()--释放资源
+      activity.finish()
+    else
+      print("再按一次退出程序")
+      exit=tonumber(os.time())
     end
-    if th_lrc ~= nil then
-      th_lrc.stop()
-    end
-    mp.stop()
-    mp.release()--释放资源
+    return true
   end
 end
 
@@ -624,6 +798,9 @@ SeekBar.OnSeekBarChangeListener{
       min,sec=setTime(cur)
       tv_startTime.setText(tt)
       mp.seekTo(cur)
+
+      lrc_jump = true
+
       if t~=nil then --计时器不为空就停止
         t.Enabled=false
         t.stop()
@@ -648,4 +825,4 @@ SeekBar.OnSeekBarChangeListener{
 
 --print(this.getExternalFilesDir("J"))
 --activity.newActivity('select_dir', {'/sdcard/'})
---print(os.clock())
+--print(System.currentTimeMillis())
