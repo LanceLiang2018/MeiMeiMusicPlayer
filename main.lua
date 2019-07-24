@@ -15,7 +15,15 @@ require "layout"
 import "java.lang.System"
 activity.setTitle("播放器")
 --activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
---activity.setTheme(android.R.style.Theme_Material_NoActionBar)
+activity.overridePendingTransition(android.R.anim.slide_in_left,android.R.anim.fade_out)
+
+if Build.VERSION.SDK_INT >= 21 then
+  activity.setTheme(android.R.style.Theme_Material_NoActionBar)
+  activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+elseif Build.VERSION.SDK_INT >= 11 then
+  activity.setTheme(android.R.style.Theme_Holo_NoActionBar_Fullscreen)
+end
+
 --[[
 -- create a lyric table
 
@@ -109,15 +117,14 @@ end
 --main[3] = layout_lyric
 
 activity.setContentView(loadlayout(main))
-back.setImageBitmap(loadbitmap("back.png"))
-w_lyric.setVisibility(View.INVISIBLE)
 
 this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); 
 
 --print("h")
 
-function getAppPath()
-  return tostring(this.getExternalFilesDir("Settings"))..'/'
+function getAppPath(str)
+  if str == nil then str = "Settings" end
+  return tostring(this.getExternalFilesDir(str))..'/'
 end
 
 local arr=nil
@@ -126,7 +133,7 @@ local mp=MediaPlayer()
 local t=nil
 local isPlay=false
 local curPlay=nil --当前正在播放的mp3的路径
-local listpath=getAppPath().."playlist.txt"
+local listpath=getAppPath("Playlists").."playlist.txt"
 local tf=File(listpath)
 local dur--歌曲长度
 local cur--播放当前位置
@@ -135,6 +142,7 @@ local curIdx=0--当前播放的mp3在列表中的索引
 local th=nil--线程
 local th_lrc = nil
 local has_lrc = false
+local show_lrc = true
 local lrc_data = {}
 local lrc_lines = {
   tv_lyric_u9, tv_lyric_u8, tv_lyric_u7, 
@@ -152,6 +160,7 @@ local sline = 1
 local lrc_changed = true
 local lrc_starting = false
 local lrc_jump = false
+update_once = false
 
 local titles = {
   '就随便听听好了＾０＾~',
@@ -160,20 +169,41 @@ local titles = {
   "才、才没有期待见到您呢！",
   "123,321,1234567..."
 }
+title_now = nil
 
 math.randomseed(os.time())
-tv_title.setText(titles[math.random(1, #titles)])
+
+function title_onClick()
+  if mp.isPlaying() == true then
+    local tt=string.gsub(File(arr.get(curIdx)).getName(),".mp3$","")--偷懒一下
+    tv_title.setText(tt)
+    return
+  end
+  idx = math.random(1, #titles)
+  title_2 = titles[idx]
+  if title_2 ~= title_now then
+    title_now = title_2
+  else
+    idx = idx + 1
+    if idx > #titles then idx = 1 end
+    title_now = titles[idx]
+  end
+  tv_title.setText(title_now)
+end
+
+title_onClick()
 
 --播放音乐，不异步可控
 --@mp MediaPlayer对象
 --@path 歌曲完整路径
 function play(mp,path)
-  loadNewLrc()
   --loadNewLrc()
   mp.reset()
   mp.setDataSource(path)
   mp.prepare()
   mp.start()
+  loadNewLrc()
+  updateDisplay()
 end
 --更新内容
 function updateProgress(path)
@@ -314,8 +344,20 @@ function readLrc(path)
   return nil
 end
 
-function loadNewLrc()
+function loadNewLrc(update)
   --print(curPlay)
+  if update == true then
+    --Thread.sleep(300)
+  end
+  --if mp.isPlaying() then
+  local cur=pb_time.getProgress()
+  local tt=formatTime(cur)
+  min,sec=0,0
+  gms = 0
+  --tv_startTime.setText(tt)
+  --end
+  ms_start = 0
+  lrc_jump = false
   lrc_data = {}
   sline = 0
   for i=1, #lrc_lines do
@@ -356,6 +398,9 @@ function loadNewLrc()
     tv_lyric.setText("")
     tv_lyric.setVisibility(View.INVISIBLE)
   end
+   --ms_start = 0
+   init_ms(0)
+  lrc_jump = true
 end
 
 --显示歌曲列表
@@ -478,29 +523,44 @@ end
 
 function updateTimeMs(ms)
   --change = false
+  --ms = gms
+  --print(ms)
   --print(sline)
-  if has_lrc == true then
+  if (has_lrc == true and show_lrc == true) or update_once == true then
+    --print(update_once)
+    --print(mp.isPlaying() == true)
     --tv_lyric.setText(tostring(ms))
-    if sline + 1 >= #lrc_data then return end
-    if lrc_starting == true then
+    if sline >= #lrc_data then return end
+    if lrc_starting == true then-- and update_once == true then
+      --print("starting")
       lrc_starting = false
+      --sline = 0
+      return
+    end
+    if update_once == true then
+      --print("Update once")
+      sline = 0
+      update_once = false
       return
     end
     if sline == nil then sline = 0 end
     if #lrc_data ~= 0 then
       --break
       if lrc_jump == true then
-        while sline + 1 < #lrc_data and lrc_data[sline+1][1] < ms do
+        while sline + 1 <= #lrc_data and lrc_data[sline+1][1] < ms do
+          --print('jump!')
+          -- sometimes bug occurs here
           sline = sline + 1
           lrc_changed = true
         end
         lrc_jump = false
       end
       for t=1, 1 do 
-        if sline + 1 < #lrc_data and lrc_data[sline+1][1] < ms then
+        if sline + 1 <= #lrc_data and lrc_data[sline+1][1] < ms then
           --print(lrc_data[sline+1][1])
           sline = sline + 1
           lrc_changed = true
+          --print("c")
         end
       end
     end
@@ -512,11 +572,14 @@ function updateTimeMs(ms)
         lrc_lines[i].setText('')
         if idx <= #lrc_data and idx > 0 and lrc_lines[i] ~= nil then
           lrc_lines[i].setText(tostring(lrc_data[idx][2]))
+          --print(sline, i)
         end
         --lrc_lines[i].setText(tostring(i))
       end
       --print(lrc_lines[1])
       --tv_lyric.setText(tostring(System.currentTimeMillis()))
+      --update_once = false
+      lrc_changed = false
     end
   end
 end
@@ -524,12 +587,12 @@ end
 --计时器代码
 function _run(m,s)
   function run()
-    s=s+1
-    if(s==60) then
+    s=s+500
+    if(s==60000) then
       m=m+1
       s=0
     end
-    call("updateTime",m,s)
+    call("updateTime",m,tointeger(s/1000))
   end
 end
 
@@ -540,8 +603,13 @@ end
 
 local delta = 0
 local ms_start = 0
+local gms = 0
 function init_ms(ms)
   --print("init_ms", ms)
+  local cur=pb_time.getProgress()
+  local tt=formatTime(cur)
+  min,sec=setTime(cur)
+  gms = 1000 * (60 * min + sec)
   ms_start = System.currentTimeMillis()
 end
 function calc_delta(ms)
@@ -550,8 +618,9 @@ function calc_delta(ms)
     init_ms(ms)
     return
   end
+  if mp.isPlaying() == false then return end
   ms_now = System.currentTimeMillis()
-  delta = ms_now - ms_start + ms
+  delta = ms_now - ms_start + gms
   if delta <= 0 then 
     ms_start = 0
     return 
@@ -637,6 +706,7 @@ mp.setOnCompletionListener(MediaPlayer.OnCompletionListener{
     th_lrc.Enabled=false
     th_lrc.stop()
     th_lrc=nil
+    --loadNewLrc()
     on_next(nil)
   end})
 
@@ -666,8 +736,10 @@ end
 --歌曲开始播放
 mp.setOnPreparedListener(MediaPlayer.OnPreparedListener{
   onPrepared=function(mper)
+    --print("Mp start")
     dur=mper.getDuration()--获取歌曲的时常
     pb_time.setMax(dur)
+    pb_time.setProgress(0)
     local tt=formatTime(dur)
     tv_startTime.setText("00:00")
     tv_endTime.setText(tt)
@@ -684,8 +756,9 @@ mp.setOnPreparedListener(MediaPlayer.OnPreparedListener{
       th_lrc=nil
     end
     --歌曲开始播放又计时
-    t=timer(_run,0,1000,min,sec)
+    t=timer(_run,0,500,min,sec)
     t.Enabled=true
+    --[[
     if th_lrc ~= nil then
       --print("!")
       th_lrc.Enabled = false
@@ -695,6 +768,8 @@ mp.setOnPreparedListener(MediaPlayer.OnPreparedListener{
     --print("Start New!")
     th_lrc=timer(_run_ms,0,100,min,sec)
     th_lrc.Enabled=true
+    ]]
+    loadNewLrc(true)
   end})
 
 --按下暂停时发生
@@ -714,6 +789,14 @@ function on_pause(v)
       bn_pause.setText("H")
       t.Enabled=true
       --th_lrc.Enabled = true
+      lrc_jump = true
+      local cur=pb_time.getProgress()
+      local tt=formatTime(cur)
+      min,sec=setTime(cur)
+      tv_startTime.setText(tt)
+      loadNewLrc()
+      lrc_jump = true
+      updateDisplay()
     else
       curIdx = -1
       on_next(nil)
@@ -770,6 +853,7 @@ function onKeyDown(code,event)
   if string.find(tostring(event),"KEYCODE_BACK") ~= nil then 
     --并不会发生什么...
     if exit+2 > tonumber(os.time()) then 
+      --activity.overridePendingTransition(android.R.anim.slide_out_right,android.R.anim.fade_out)
       if t~=nil then
         t.stop()
       end
@@ -807,7 +891,7 @@ SeekBar.OnSeekBarChangeListener{
         t=nil
       end
       --重新计时
-      t=timer(_run,0,1000,min,sec)
+      t=timer(_run,0,500,min,sec)
       t.Enabled=true
       if th_lrc ~= nil then
         --print("!")
@@ -822,6 +906,119 @@ SeekBar.OnSeekBarChangeListener{
       th_lrc.Enabled=true
     end
   end})
+
+function onCreate()
+  --print("窗口创建")
+end
+
+function onStart()
+  local cur=pb_time.getProgress()
+  local tt=formatTime(cur)
+  min,sec=setTime(cur)
+  tv_startTime.setText(tt)
+  lrc_jump = true
+  loadNewLrc()
+  update_once = true
+  updateTimeMs(gms)
+  lrc_jump = true
+  if th_lrc ~= nil then
+    --print("!")
+    th_lrc.Enabled = false
+    th_lrc.stop()
+    th_lrc = nil
+  end
+  sline = 0
+  lrc_changed = true
+  --print("Start New!")
+  th_lrc=timer(_run_ms,0,100,min,sec)
+  th_lrc.Enabled=true
+  --print("活动开始")
+  updateDisplay()
+end
+
+function onResume()
+  --print("返回程序")
+  local cur=pb_time.getProgress()
+  local tt=formatTime(cur)
+  min,sec=setTime(cur)
+  tv_startTime.setText(tt)
+  lrc_jump = true
+  loadNewLrc()
+  update_once = true
+  updateTimeMs(gms)
+  lrc_jump = true
+  if th_lrc ~= nil then
+    --print("!")
+    th_lrc.Enabled = false
+    th_lrc.stop()
+    th_lrc = nil
+  end
+  sline = 0
+  lrc_changed = true
+  --print("Start New!")
+  th_lrc=timer(_run_ms,0,100,min,sec)
+  th_lrc.Enabled=true
+  updateDisplay()
+end
+
+function onPause()
+  --print("活动暂停")
+  sline = 0
+  lrc_changed = true
+  if th_lrc ~= nil then
+    --print("!")
+    th_lrc.Enabled = false
+    th_lrc.stop()
+    th_lrc = nil
+  end
+end
+
+function onStop()
+  --print("活动停止")
+  sline = 0
+  lrc_changed = true
+  if th_lrc ~= nil then
+    --print("!")
+    th_lrc.Enabled = false
+    th_lrc.stop()
+    th_lrc = nil
+  end
+  sline = 0
+  lrc_changed = true
+end
+
+function onDestroy()
+  --print("程序已退出")
+end
+
+back.setImageBitmap(loadbitmap("back.png"))
+function updateDisplay()
+  if show_lrc == true and has_lrc == true then
+    back.setImageBitmap(loadbitmap("back.png"))
+    back.setVisibility(View.INVISIBLE)
+    w_lyric.setVisibility(View.VISIBLE)
+  else
+    back.setImageBitmap(loadbitmap("back.png"))
+    back.setVisibility(View.VISIBLE)
+    w_lyric.setVisibility(View.INVISIBLE)
+  end
+end
+
+updateDisplay()
+
+function rl_back_onClick()
+  --print('dcc')
+  if mp.isPlaying() == true then
+    update_once = true
+    show_lrc = not show_lrc
+    loadNewLrc()
+    lrc_jump = true
+    update_once = true
+    updateTimeMs(gms)
+    ms_start = 0
+    updateDisplay()
+  end
+end
 
 --print(this.getExternalFilesDir("J"))
 --activity.newActivity('select_dir', {'/sdcard/'})
